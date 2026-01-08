@@ -131,11 +131,15 @@ edit_uri: "edit/main/docs"
 nav:
   - Home: index.md
   - Containers Images:
+      - Alert-Proxy: containers/alert-proxy.md
       - Apache: containers/apache.md
       - Barbican: containers/barbican.md
-      - Ceph Libs: containers/ceph-libs.md
+      - Blazar: containers/blazar.md
+      - Ceph Client: containers/ceph-client.md
       - Designate: containers/designate.md
       - Cinder: containers/cinder.md
+      - Cloudkitty: containers/cloudkitty.md
+      - Freezer: containers/freezer.md
       - Glance: containers/glance.md
       - Heat: containers/heat.md
       - Horizon: containers/horizon.md
@@ -144,19 +148,24 @@ nav:
       - Ironic Inspector: containers/ironic-inspector.md
       - Ironic PXE: containers/ironic-pxe.md
       - Keystone: containers/keystone.md
+      - Kubectl: containers/kubectl.md
       - Kube-OVN: containers/kube-ovn.md
       - Kubernetes Entrypoint: containers/kubernetes-entrypoint.md
       - Libguestfs: containers/libguestfs.md
       - Libvirt: containers/libvirt.md
       - Magnum: containers/magnum.md
+      - Manila: containers/manila.md
       - Masakari: containers/masakari.md
+      - Masakari-Monitors: containers/masakari-monitors.md
       - Neutron: containers/neutron.md
       - Nova: containers/nova.md
       - Octavia: containers/octavia.md
+      - Openstack Client: containers/openstack-client.md
       - Openstack Venv: containers/openstack-venv.md
       - OVS: containers/ovs.md
       - Placement: containers/placement.md
       - Shibd: containers/shibd.md
       - Skyline: containers/skyline.md
+      - Trove: containers/trove.md
   - Blog: https://blog.rackspacecloud.com/blog
   - Docs: https://docs.rackspacecloud.com

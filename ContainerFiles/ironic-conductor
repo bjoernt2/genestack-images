@@ -2,8 +2,9 @@
 # This Dockerfile uses multi-stage build to customize DEV and PROD images:
 # https://docs.docker.com/develop/develop-images/multistage-build/
 
-ARG VENV_TAG=3.12-latest
-FROM ghcr.io/rackerlabs/genestack-images/openstack-venv:${VENV_TAG} AS dependency_build
+ARG VENV_TAG=3.12-trixie-latest
+ARG GHCR_URL=ghcr.io/rackerlabs
+FROM ${GHCR_URL}/openstack-venv:${VENV_TAG} AS dependency_build
 ARG CACHEBUST=0
 ARG OS_VERSION=master
 ARG OS_CONSTRAINTS=master
@@ -35,6 +36,7 @@ RUN /var/lib/openstack/bin/pip install --constraint https://opendev.org/openstac
                                        git+https://opendev.org/openstack/ironic.git@${OS_VERSION}#egg=ironic \
                                        PyMySQL \
                                        python-memcached \
+                                       sushy \
                                        uwsgi
 
 COPY scripts/ironic-cve-patching.sh /opt/
@@ -49,7 +51,7 @@ RUN find / -name '*.pyc' -delete \
   && sed -i '/^Usage/,/^Documentation\n^-.*$/d' /var/lib/openstack/lib/python*/site-packages/PyJWT-*.dist-info/METADATA
 
 
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-trixie
 LABEL maintainer="Rackspace"
 LABEL vendor="Rackspace OpenStack Team"
 LABEL org.opencontainers.image.name="ironic-conductor"
@@ -57,7 +59,7 @@ LABEL org.opencontainers.image.description="OpenStack Service (ironic-conductor)
 COPY --from=dependency_build /var/lib/openstack /var/lib/openstack
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update && apt-get upgrade -y \
-  && apt-get install --no-install-recommends -y libxml2 iproute2 \
+  && apt-get install --no-install-recommends -y libxml2 ipmitool iproute2 qemu-utils genisoimage \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/* \

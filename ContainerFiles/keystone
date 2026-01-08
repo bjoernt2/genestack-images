@@ -2,8 +2,9 @@
 # This Dockerfile uses multi-stage build to customize DEV and PROD images:
 # https://docs.docker.com/develop/develop-images/multistage-build/
 
-ARG VENV_TAG=3.12-latest
-FROM ghcr.io/rackerlabs/genestack-images/openstack-venv:${VENV_TAG} AS dependency_build
+ARG VENV_TAG=3.12-trixie-latest
+ARG GHCR_URL=ghcr.io/rackerlabs
+FROM ${GHCR_URL}/openstack-venv:${VENV_TAG} AS dependency_build
 ARG CACHEBUST=0
 ARG OS_VERSION=master
 ARG OS_CONSTRAINTS=master
@@ -41,6 +42,7 @@ RUN /var/lib/openstack/bin/pip install --constraint https://opendev.org/openstac
                                        ldappool \
                                        pyngus \
                                        python-memcached \
+                                       python-openstackclient \
                                        PyMySQL
 COPY scripts/keystone-cve-patching.sh /opt/
 RUN bash /opt/keystone-cve-patching.sh
@@ -53,7 +55,7 @@ RUN find / -name '*.pyc' -delete \
   && sed -i '/^Usage/,/^Documentation\n^-.*$/d' /var/lib/openstack/lib/python*/site-packages/PyJWT-*.dist-info/METADATA
 
 
-FROM ghcr.io/rackerlabs/genestack-images/apache:latest
+FROM docker-image://apache:latest
 LABEL maintainer="Rackspace"
 LABEL vendor="Rackspace OpenStack Team"
 LABEL org.opencontainers.image.name="keystone"
@@ -61,7 +63,7 @@ LABEL org.opencontainers.image.description="OpenStack Service (Keystone) built f
 COPY --from=dependency_build /var/lib/openstack /var/lib/openstack
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update && apt-get upgrade -y \
-  && apt-get install --no-install-recommends -y libapache2-mod-shib \
+  && apt-get install --no-install-recommends -y libapache2-mod-shib libapache2-mod-auth-openidc \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && apt-get clean -y \
   && rm -rf /var/lib/apt/lists/* \

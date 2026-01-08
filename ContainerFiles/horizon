@@ -2,8 +2,9 @@
 # This Dockerfile uses multi-stage build to customize DEV and PROD images:
 # https://docs.docker.com/develop/develop-images/multistage-build/
 
-ARG VENV_TAG=3.12-latest
-FROM ghcr.io/rackerlabs/genestack-images/openstack-venv:${VENV_TAG} AS dependency_build
+ARG VENV_TAG=3.12-trixie-latest
+ARG GHCR_URL=ghcr.io/rackerlabs
+FROM ${GHCR_URL}/openstack-venv:${VENV_TAG} AS dependency_build
 ARG CACHEBUST=0
 ARG OS_VERSION=master
 ARG OS_CONSTRAINTS=master
@@ -40,6 +41,7 @@ RUN /var/lib/openstack/bin/pip install --constraint /tmp/upper-constraints.txt \
                                        git+https://opendev.org/openstack/horizon.git@${OS_VERSION}#egg=horizon \
                                        git+https://opendev.org/openstack/adjutant-ui@${OS_CONSTRAINTS}#egg=adjutant-ui \
                                        git+https://opendev.org/openstack/designate-dashboard@${OS_CONSTRAINTS}#egg=designate_dashboard \
+                                       git+https://opendev.org/openstack/cloudkitty-dashboard.git@${OS_VERSION}#egg=cloudkitty_dashboard \
                                        git+https://opendev.org/openstack/heat-dashboard@${OS_CONSTRAINTS}#egg=heat_dashboard \
                                        git+https://opendev.org/openstack/ironic-ui@${OS_CONSTRAINTS}#egg=ironic-ui \
                                        git+https://opendev.org/openstack/magnum-ui@${OS_CONSTRAINTS}#egg=magnum-ui \
@@ -50,6 +52,7 @@ RUN /var/lib/openstack/bin/pip install --constraint /tmp/upper-constraints.txt \
                                        git+https://opendev.org/openstack/neutron-fwaas-dashboard@${OS_CONSTRAINTS}#egg=neutron_fwaas_dashboard \
                                        git+https://opendev.org/openstack/octavia-dashboard@${OS_CONSTRAINTS}#egg=octavia_dashboard \
                                        PyMySQL \
+                                       pymemcache \
                                        python-memcached
 COPY scripts/horizon-cve-patching.sh /opt/
 RUN bash /opt/horizon-cve-patching.sh

@@ -7,6 +7,7 @@ FROM ghcr.io/rackerlabs/genestack-images/libguestfs:${BUILT_TAG} AS dependency_b
 ARG OS_VERSION=master
 ARG OS_CONSTRAINTS=master
 ARG NOVNC_VERSION=master
+
 RUN export DEBIAN_FRONTEND=noninteractive \
   && apt-get update && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
@@ -37,8 +38,10 @@ RUN export DEBIAN_FRONTEND=noninteractive \
                                              python3-dev \
                                              ssl-cert \
                                              xmlsec1
+
 RUN /var/lib/openstack/bin/pip install --constraint https://opendev.org/openstack/requirements/raw/branch/${OS_CONSTRAINTS}/upper-constraints.txt \
                                        git+https://opendev.org/openstack/nova.git@${OS_VERSION}#egg=nova \
+                                       git+https://opendev.org/openstack/blazar-nova.git@${OS_VERSION}#egg=blazar-nova \
                                        PyMySQL \
                                        libvirt-python \
                                        novnc \
@@ -61,12 +64,13 @@ RUN find / -name '*.pyc' -delete \
   && rm -f /var/lib/openstack/lib/python*/site-packages/slapdtest/certs/server.key \
   && sed -i '/^Usage/,/^Documentation\n^-.*$/d' /var/lib/openstack/lib/python*/site-packages/PyJWT-*.dist-info/METADATA
 
-
-FROM ghcr.io/rackerlabs/genestack-images/libguestfs:${BUILT_TAG}
+ARG OS_VERSION=master
+FROM ghcr.io/rackerlabs/genestack-images/ceph-client:${OS_VERSION}
 LABEL maintainer="Rackspace"
 LABEL vendor="Rackspace OpenStack Team"
 LABEL org.opencontainers.image.name="nova"
 LABEL org.opencontainers.image.description="OpenStack Service (nova) built for the enterprise."
+
 COPY --from=dependency_build /var/lib/openstack /var/lib/openstack
 COPY --from=dependency_build /usr/share/novnc /usr/share/novnc
 RUN export DEBIAN_FRONTEND=noninteractive \
@@ -100,11 +104,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   && find / -name '*.pyo' -delete \
   && find / -name '__pycache__' -delete \
   && groupadd --system --gid 42424 nova \
-  && useradd --system --gid 42424 --uid 42424 --shell /sbin/nologin --create-home --home /var/lib/nova nova \
+  && useradd --system --gid 42424 --uid 42424 --shell /bin/bash --create-home --home /var/lib/nova nova \
   && mkdir -p /var/lib/openstack/etc/nova \
   && ln -s /var/lib/openstack/etc/nova /etc/nova \
   && chown nova:nova -h /etc/nova \
   && chown -R nova:nova /var/lib/openstack/etc/nova
+
 # Set the environment variables for the nova venv
 ENV PATH="/var/lib/openstack/bin:$PATH"
 # Set the working directory

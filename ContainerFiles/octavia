@@ -2,8 +2,10 @@
 # This Dockerfile uses multi-stage build to customize DEV and PROD images:
 # https://docs.docker.com/develop/develop-images/multistage-build/
 
-ARG VENV_TAG=3.12-latest
-FROM ghcr.io/rackerlabs/genestack-images/openstack-venv:${VENV_TAG} AS dependency_build
+ARG VENV_TAG=3.12-trixie-latest
+ARG GHCR_URL=ghcr.io/rackerlabs
+FROM ${GHCR_URL}/openstack-venv:${VENV_TAG} AS dependency_build
+
 ARG CACHEBUST=0
 ARG OS_VERSION=master
 ARG OS_CONSTRAINTS=master
@@ -55,7 +57,7 @@ RUN find / -name '*.pyc' -delete \
   && sed -i '/^Usage/,/^Documentation\n^-.*$/d' /var/lib/openstack/lib/python*/site-packages/PyJWT-*.dist-info/METADATA
 
 
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-trixie
 LABEL maintainer="Rackspace"
 LABEL vendor="Rackspace OpenStack Team"
 LABEL org.opencontainers.image.name="octavia"
@@ -78,7 +80,9 @@ RUN export DEBIAN_FRONTEND=noninteractive \
   && mkdir -p /var/lib/openstack/etc/octavia \
   && ln -s /var/lib/openstack/etc/octavia /etc/octavia \
   && chown octavia:octavia -h /etc/octavia \
-  && chown -R octavia:octavia /var/lib/openstack/etc/octavia
+  && chown -R octavia:octavia /var/lib/openstack/etc/octavia \
+  && mkdir -p /etc/dhcp/dhclient-enter-hooks.d \
+  && echo 'make_resolv_conf() { : ; }' | tee /etc/dhcp/dhclient-enter-hooks.d/no-resolv
 # Set the environment variables for the octavia venv
 ENV PATH="/var/lib/openstack/bin:$PATH"
 # Set the working directory

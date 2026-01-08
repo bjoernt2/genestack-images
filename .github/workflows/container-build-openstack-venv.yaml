@@ -22,6 +22,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}/openstack-venv
   PYTHON_VERSION: 3.12
+  OS_RELEASE: trixie
   CATEGORY_NAME: openstack-venv
 
 jobs:
@@ -65,8 +66,9 @@ jobs:
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             CACHEBUST=${{ github.sha }}
+            GHCR_URL=${{ env.REGISTRY }}/${{ github.repository }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.33.1  # using latest trivy scanner
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         with:
           image-ref: '${{ env.IMAGE_NAME }}:local'
@@ -82,7 +84,7 @@ jobs:
           sarif_file: 'trivy-results.sarif'
           category: "${{ env.CATEGORY_NAME }}"
       - name: Run Trivy scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.33.1  # using latest trivy scanner
         if: ${{ github.event_name == 'pull_request' }}
         with:
           image-ref: '${{ env.IMAGE_NAME }}:local'
@@ -116,8 +118,10 @@ jobs:
           cache-to: type=gha,mode=max
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.PYTHON_VERSION }}-latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.PYTHON_VERSION }}-${{ env.OS_RELEASE }}-latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.PYTHON_VERSION }}-${{ env.MY_DATE }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             PYTHON_VERSION=${{ env.PYTHON_VERSION }}
             CACHEBUST=${{ github.sha }}
+            GHCR_URL=${{ env.REGISTRY }}/${{ github.repository }}

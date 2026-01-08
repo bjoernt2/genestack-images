@@ -26,7 +26,7 @@ on:
         type: choice
         options:
           - master
-          - stable/2024.1
+          - unmaintained/2024.1
           - stable/2025.1
       project-version:
         description: 'Version of OpenStack Ironic to build, defaults to openstack-constraints if unspecified'
@@ -41,7 +41,7 @@ env:
   #                   workflow_dispatch event, so they're being stored in the environment variables. This is a
   #                   workaround until there's a better way to handle this.
   openstack_constraints: >
-    ["stable/2024.1", "stable/2025.1"]
+    ["unmaintained/2024.1", "stable/2025.1"]
 
 jobs:
   init:
@@ -105,8 +105,9 @@ jobs:
             OS_VERSION=${{ env.project_version != '' && env.project_version || matrix.openstack-constraints }}
             OS_CONSTRAINTS=${{ matrix.openstack-constraints }}
             CACHEBUST=${{ github.sha }}
+            GHCR_URL=${{ env.REGISTRY }}/${{ github.repository }}
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.33.1  # using latest trivy scanner
         if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' }}
         with:
           image-ref: '${{ env.IMAGE_NAME }}:local'
@@ -122,7 +123,7 @@ jobs:
           sarif_file: 'trivy-results.sarif'
           category: "${{ env.CATEGORY_NAME }}"
       - name: Run Trivy scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.33.1  # using latest trivy scanner
         if: ${{ github.event_name == 'pull_request' }}
         with:
           image-ref: '${{ env.IMAGE_NAME }}:local'
@@ -162,3 +163,4 @@ jobs:
             OS_VERSION=${{ env.project_version != '' && env.project_version || matrix.openstack-constraints }}
             OS_CONSTRAINTS=${{ matrix.openstack-constraints }}
             CACHEBUST=${{ github.sha }}
+            GHCR_URL=${{ env.REGISTRY }}/${{ github.repository }}
